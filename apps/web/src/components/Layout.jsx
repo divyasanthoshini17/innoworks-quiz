@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate, useOutlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import { PageTransition } from "./PageTransition";
 import { AnimatePresence, motion } from "framer-motion";
@@ -9,6 +9,12 @@ import { logoutUser } from "../store/slices/authSlice";
 import CommandPalette from "./CommandPalette";
 import { initiateSocket, disconnectSocket, subscribeToNotifications } from "../lib/socket";
 import { Bell, X, ShieldAlert, Sparkles, Trophy, Rocket, AlertCircle, Layers } from "lucide-react";
+
+const AnimatedOutlet = () => {
+  const o = useOutlet();
+  const [outlet] = useState(o);
+  return <>{outlet}</>;
+};
 
 const Layout = () => {
   const location = useLocation();
@@ -167,7 +173,7 @@ const Layout = () => {
       <main className="flex-1 relative">
         <AnimatePresence mode="wait">
           <PageTransition key={location.pathname} className="w-full h-full">
-            <Outlet />
+            <AnimatedOutlet />
           </PageTransition>
         </AnimatePresence>
       </main>

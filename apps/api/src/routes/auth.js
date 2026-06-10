@@ -20,8 +20,10 @@ router.post("/logout", authenticate, async (req, res) => {
     const ttl = decoded.exp ? Math.max(0, decoded.exp - Math.floor(Date.now() / 1000)) : 86400;
 
     const redis = getRedisConnection();
-    if (redis) {
+    if (redis && redis.status === 'ready') {
       await redis.set(`blocklist:${token}`, "true", "EX", ttl);
+    } else {
+      console.warn("⚠️ Redis not ready, skipped token blocklisting on logout");
     }
 
     res.json({ message: "Logged out successfully" });

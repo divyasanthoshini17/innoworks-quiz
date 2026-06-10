@@ -20,7 +20,7 @@ export const authenticate = async (req, res, next) => {
   try {
     // Check if token is blocklisted in Redis
     const redis = getRedisConnection();
-    if (redis) {
+    if (redis && redis.status === 'ready') {
       const isBlocklisted = await redis.get(`blocklist:${token}`);
       if (isBlocklisted) {
         return res.status(401).json({ message: "Authentication required: Token has been invalidated" });

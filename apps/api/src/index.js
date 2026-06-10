@@ -26,48 +26,11 @@ const httpServer = createServer(app);
 // Trust proxy if behind Render or similar load balancer
 app.set('trust proxy', 1);
 
-// Global Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many requests from this IP, please try again after 15 minutes" }
-});
-
-// Apply rate limiter to all requests
-app.use(limiter);
-
-// Specific rate limit for Auth
-const authLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 20, // Limit each IP to 20 auth requests per hour
-  message: { message: "Too many login attempts, please try again after an hour" }
-});
-app.use("/auth/github", authLimiter);
-
-// Connect to MongoDB with error handling and run seeding
-connectDB().then((conn) => {
-  if (conn) {
-    import('./lib/seedQuizzes.js').then(m => m.seedQuizzes());
-  }
-}).catch(err => {
-  console.error("❌ MongoDB Connection Error:", err.message);
-  console.log("⚠️ Server starting without DB - check your MONGODB_URI");
-});
-
+// FRONTEND_URL definition
 let FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 if (FRONTEND_URL.endsWith("/")) FRONTEND_URL = FRONTEND_URL.slice(0, -1);
 
-const io = new Server(httpServer, {
-  cors: {
-    origin: [FRONTEND_URL],
-    methods: ["GET", "POST"],
-    credentials: true
-  },
-});
-
-// Relaxed CORS for development and OAuth
+// Relaxed CORS for development and OAuth (MUST be registered before any endpoints/limiters)
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl)
@@ -93,6 +56,44 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
+
+// Global Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 100 : 10000, // Higher limit in development
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests from this IP, please try again after 15 minutes" }
+});
+
+// Apply rate limiter to all requests
+app.use(limiter);
+
+// Specific rate limit for Auth
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: process.env.NODE_ENV === 'production' ? 20 : 1000, // Higher limit in development
+  message: { message: "Too many login attempts, please try again after an hour" }
+});
+app.use("/auth/github", authLimiter);
+
+// Connect to MongoDB with error handling and run seeding
+connectDB().then((conn) => {
+  if (conn) {
+    import('./lib/seedQuizzes.js').then(m => m.seedQuizzes());
+  }
+}).catch(err => {
+  console.error("❌ MongoDB Connection Error:", err.message);
+  console.log("⚠️ Server starting without DB - check your MONGODB_URI");
+});
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: [FRONTEND_URL],
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+});
 
 // Relaxed Helmet for OAuth redirects and development
 app.use(helmet({
