@@ -57,7 +57,7 @@ const Home = () => {
   }, [isAuthenticated, navigate]);
 
   const handleLogin = () => {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4001";
     window.location.href = `${apiUrl}/auth/github`;
   };
 
