@@ -27,7 +27,7 @@ const httpServer = createServer(app);
 app.set('trust proxy', 1);
 
 // FRONTEND_URL definition
-let FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+let FRONTEND_URL = process.env.FRONTEND_URL ;
 if (FRONTEND_URL.endsWith("/")) FRONTEND_URL = FRONTEND_URL.slice(0, -1);
 
 // Relaxed CORS for development and OAuth (MUST be registered before any endpoints/limiters)
@@ -38,9 +38,9 @@ app.use(cors({
     
     // In development, allow localhost. In production, strictly use FRONTEND_URL
     const allowedOrigins = [FRONTEND_URL];
-    if (process.env.NODE_ENV !== 'production') {
-      allowedOrigins.push("http://localhost:5173", "http://localhost:3000");
-    }
+    // if (process.env.NODE_ENV !== 'production') {
+    //   allowedOrigins.push("http://localhost:5173", "http://localhost:3000");
+    // }
     
     const normalizedOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
     

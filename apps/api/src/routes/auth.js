@@ -194,7 +194,7 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 const JWT_SECRET = process.env.JWT_SECRET || "secret";
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "refresh_secret";
-const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL || "http://localhost:4000/auth/github/callback";
+const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL ;
 
 router.get("/github", (req, res) => {
   const url =
@@ -278,7 +278,7 @@ router.get("/github/callback", async (req, res) => {
     });
 
     // Redirect to frontend with token
-    let frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    let frontendUrl = process.env.FRONTEND_URL ;
     if (frontendUrl.endsWith("/")) frontendUrl = frontendUrl.slice(0, -1);
     res.redirect(
       `${frontendUrl}/auth/callback?token=${token}&refreshToken=${refreshToken}`,
