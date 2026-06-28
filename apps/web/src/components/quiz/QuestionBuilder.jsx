@@ -100,15 +100,15 @@ const QuestionBuilder = ({ questions, setQuestions }) => {
   };
 
   return (
-    <div className="bg-card/25 backdrop-blur-xl border border-border/40 rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl relative">
+    <div className="bg-card/40 backdrop-blur-2xl border border-border/50 rounded-[2rem] p-6 sm:p-10 space-y-8 shadow-2xl shadow-black/10 relative overflow-hidden">
       {/* Decorative Glow */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] pointer-events-none -translate-y-1/3 translate-x-1/4" />
 
       {/* Header */}
-      <div className="flex justify-between items-center border-b border-border/20 pb-4">
+      <div className="flex justify-between items-center border-b border-border/30 pb-6 relative z-10">
         <div>
-          <h2 className="text-lg font-black tracking-tight">Question Builder</h2>
-          <p className="text-xs text-muted-foreground font-medium">Draft questions and label correct answers.</p>
+          <h2 className="text-2xl font-black tracking-tight">Question Builder</h2>
+          <p className="text-sm text-muted-foreground font-medium mt-1">Draft questions and label correct answers.</p>
         </div>
         <button
           type="button"
@@ -121,33 +121,33 @@ const QuestionBuilder = ({ questions, setQuestions }) => {
       </div>
 
       {/* Main Area */}
-      <div className="space-y-5">
+      <div className="space-y-6 relative z-10">
         {/* Progress Navigation Tracker */}
-        <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+        <div className="flex items-center justify-between text-xs font-black text-muted-foreground uppercase tracking-widest">
           <span>Editing Question {activeIndex + 1} of {questions.length}</span>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setActiveIndex(prev => Math.max(0, prev - 1))}
               disabled={activeIndex === 0}
-              className="p-1.5 border border-border/40 rounded-lg hover:border-primary/30 disabled:opacity-30 disabled:pointer-events-none transition-all"
+              className="p-2 border border-border/50 rounded-xl hover:border-primary/50 hover:bg-primary/5 disabled:opacity-30 disabled:pointer-events-none transition-all"
             >
-              <ArrowLeft size={14} />
+              <ArrowLeft size={16} />
             </button>
             <button
               type="button"
               onClick={() => setActiveIndex(prev => Math.min(questions.length - 1, prev + 1))}
               disabled={activeIndex === questions.length - 1}
-              className="p-1.5 border border-border/40 rounded-lg hover:border-primary/30 disabled:opacity-30 disabled:pointer-events-none transition-all"
+              className="p-2 border border-border/50 rounded-xl hover:border-primary/50 hover:bg-primary/5 disabled:opacity-30 disabled:pointer-events-none transition-all"
             >
-              <ArrowRight size={14} />
+              <ArrowRight size={16} />
             </button>
           </div>
         </div>
 
         {/* Question Text */}
-        <div className="space-y-1.5">
-          <label htmlFor="questionText" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+        <div className="space-y-2">
+          <label htmlFor="questionText" className="text-[11px] font-black text-muted-foreground uppercase tracking-widest pl-1">
             Question Text
           </label>
           <input
@@ -156,35 +156,39 @@ const QuestionBuilder = ({ questions, setQuestions }) => {
             value={currentQuestion.questionText}
             onChange={handleQuestionTextChange}
             placeholder="e.g. Which HTML tag is used to create a hyperlink?"
-            className="w-full bg-background/50 border border-border/40 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 rounded-2xl px-4 py-3 text-sm text-foreground outline-none transition-all"
+            className="w-full bg-background/80 border border-border/50 focus:border-primary/50 focus:ring-4 focus:ring-primary/10 rounded-2xl px-5 py-4 text-base font-semibold text-foreground outline-none transition-all shadow-sm placeholder-muted-foreground/50"
             required
           />
         </div>
 
         {/* Options List */}
-        <div className="space-y-3">
-          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+        <div className="space-y-4">
+          <span className="text-[11px] font-black text-muted-foreground uppercase tracking-widest pl-1">
             Options & Correct Answer
           </span>
           
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3.5">
             {currentQuestion.options.map((option, optIdx) => {
               const isCorrect = currentQuestion.correctOptionIndex === optIdx;
               
               return (
-                <div key={optIdx} className="flex items-center gap-3.5 group">
+                <div key={optIdx} className={`flex items-center gap-3 p-1.5 pr-3 rounded-2xl border transition-all ${
+                  isCorrect 
+                    ? 'bg-emerald-500/5 border-emerald-500/30' 
+                    : 'bg-background/50 border-border/50 hover:border-primary/30'
+                }`}>
                   {/* Select Correct Radio Button */}
                   <button
                     type="button"
                     onClick={() => handleSelectCorrect(optIdx)}
-                    className={`w-5.5 h-5.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all shadow-sm ${
                       isCorrect 
-                        ? 'border-emerald-500 bg-emerald-500 text-white' 
-                        : 'border-border bg-card/25 hover:border-primary/50'
+                        ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
+                        : 'bg-card border border-border hover:bg-muted text-muted-foreground'
                     }`}
                     title="Mark as correct answer"
                   >
-                    {isCorrect && <Check size={10} strokeWidth={3} />}
+                    {isCorrect ? <Check size={18} strokeWidth={3} /> : <span className="text-xs font-bold font-mono">{String.fromCharCode(65 + optIdx)}</span>}
                   </button>
 
                   {/* Input Option Text */}
@@ -193,11 +197,7 @@ const QuestionBuilder = ({ questions, setQuestions }) => {
                     value={option}
                     onChange={(e) => handleOptionChange(optIdx, e.target.value)}
                     placeholder={`Option ${optIdx + 1}`}
-                    className={`flex-grow bg-background/50 border focus:ring-2 rounded-xl px-4 py-2.5 text-xs text-foreground outline-none transition-all ${
-                      isCorrect
-                        ? 'border-emerald-500/50 focus:border-emerald-500 focus:ring-emerald-500/10'
-                        : 'border-border/40 focus:border-primary/50 focus:ring-primary/20'
-                    }`}
+                    className="flex-grow bg-transparent border-none text-sm font-medium text-foreground outline-none px-2"
                     required
                   />
 
@@ -206,10 +206,10 @@ const QuestionBuilder = ({ questions, setQuestions }) => {
                     type="button"
                     onClick={() => handleRemoveOption(optIdx)}
                     disabled={currentQuestion.options.length <= 4}
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 p-2 rounded-lg disabled:opacity-0 disabled:pointer-events-none transition-all shrink-0"
+                    className="text-muted-foreground hover:text-red-500 hover:bg-red-500/10 p-2 rounded-xl disabled:opacity-0 disabled:pointer-events-none transition-all shrink-0"
                     title="Remove option"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={16} />
                   </button>
                 </div>
               );
@@ -219,29 +219,29 @@ const QuestionBuilder = ({ questions, setQuestions }) => {
 
         {/* Warning if option count is low */}
         {currentQuestion.options.length < 4 && (
-          <div className="flex items-center gap-2 text-[10px] font-bold text-yellow-500 bg-yellow-500/5 p-3.5 border border-yellow-500/20 rounded-xl">
-            <AlertCircle size={14} />
+          <div className="flex items-center gap-3 text-[11px] font-bold text-amber-500 bg-amber-500/10 p-4 border border-amber-500/20 rounded-2xl">
+            <AlertCircle size={16} />
             <span>A minimum of 4 options is required for each question.</span>
           </div>
         )}
 
         {/* Builder bottom controls */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-border/20">
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-6 border-t border-border/30 mt-6">
           <button
             type="button"
             onClick={handleAddOption}
-            className="text-xs font-bold text-primary hover:bg-primary/10 px-3.5 py-2 rounded-xl border border-primary/25 transition-all flex items-center gap-1.5"
+            className="text-sm font-bold text-primary hover:bg-primary/10 px-5 py-2.5 rounded-2xl border border-primary/20 transition-all flex items-center gap-2"
           >
-            <Plus size={14} />
+            <Plus size={16} />
             <span>Add Option</span>
           </button>
 
           <button
             type="button"
             onClick={handleAddQuestion}
-            className="btn-secondary px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5"
+            className="btn-secondary px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-sm"
           >
-            <Plus size={14} />
+            <Plus size={16} />
             <span>Add Question</span>
           </button>
         </div>

@@ -14,6 +14,7 @@ import submissionRoutes from './routes/submissions.js';
 import userRoutes from './routes/users.js';
 import quizRoutes from './routes/quizzes.js';
 import quizAttemptRoutes from './routes/quizAttempts.js';
+import myQuizRoutes from './routes/myQuizzes.js';
 import "./workers/testWorker.js";
 import connectDB from "./lib/mongodb.js";
 import mongoose from "mongoose";
@@ -127,6 +128,7 @@ app.use("/submissions", submissionRoutes);
 app.use("/users", userRoutes);
 app.use("/quizzes", quizRoutes);
 app.use("/quiz-attempts", quizAttemptRoutes);
+app.use("/my-quizzes", myQuizRoutes);
 
 const PORT = process.env.PORT || 4000;
 

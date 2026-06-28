@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import CustomQuizForm from '../../components/quiz/CustomQuizForm';
 import QuestionBuilder from '../../components/quiz/QuestionBuilder';
-import { PlusCircle, Link as LinkIcon, Send, Copy, Check, MessageSquare, Compass, CheckCircle } from 'lucide-react';
+import { PlusCircle, Link as LinkIcon, Send, Copy, Check, MessageSquare, Compass, CheckCircle, Edit2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../lib/api';
 
 const CustomQuiz = () => {
+  const { id } = useParams(); // if id exists, we are in edit mode
+  const navigate = useNavigate();
+  const isEditMode = !!id;
+
   const [settings, setSettings] = useState({
     title: '',
     description: '',
@@ -23,10 +28,37 @@ const CustomQuiz = () => {
   ]);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [initialFetchLoading, setInitialFetchLoading] = useState(isEditMode);
   const [createdQuiz, setCreatedQuiz] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Fetch quiz details if in edit mode
+  useEffect(() => {
+    if (isEditMode) {
+      const fetchQuiz = async () => {
+        try {
+          const res = await api.get(`/my-quizzes/${id}`);
+          const data = res.data.quiz;
+          setSettings({
+            title: data.title,
+            description: data.description || '',
+            timeLimit: data.timeLimit,
+            passingScore: data.passingScore,
+            isPublic: data.isPublic
+          });
+          setQuestions(data.questions);
+        } catch (err) {
+          console.error('Failed to fetch quiz for editing', err);
+          setErrorMsg('Failed to load quiz data for editing.');
+        } finally {
+          setInitialFetchLoading(false);
+        }
+      };
+      fetchQuiz();
+    }
+  }, [id, isEditMode]);
 
   const handleCopyLink = () => {
     if (!createdQuiz) return;
@@ -39,14 +71,14 @@ const CustomQuiz = () => {
   const handleShareWhatsApp = () => {
     if (!createdQuiz) return;
     const shareUrl = `${window.location.origin}/quiz/play/${createdQuiz.slug}`;
-    const text = encodeURIComponent(`Hey! I created a new technical quiz "${createdQuiz.title}" on Innoworks. Test your skills here: ${shareUrl}`);
+    const text = encodeURIComponent(`Hey! I ${isEditMode ? 'updated a' : 'created a new'} technical quiz "${createdQuiz.title}" on Innoworks. Test your skills here: ${shareUrl}`);
     window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
   };
 
   const handleShareTelegram = () => {
     if (!createdQuiz) return;
     const shareUrl = `${window.location.origin}/quiz/play/${createdQuiz.slug}`;
-    const text = encodeURIComponent(`Check out my new quiz "${createdQuiz.title}" on Innoworks!`);
+    const text = encodeURIComponent(`Check out my quiz "${createdQuiz.title}" on Innoworks!`);
     window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${text}`, '_blank');
   };
 
@@ -77,36 +109,54 @@ const CustomQuiz = () => {
 
     setIsLoading(true);
     try {
-      const response = await api.post('/quizzes', {
-        ...settings,
-        questions
-      });
+      let response;
+      if (isEditMode) {
+        response = await api.put(`/quizzes/${id}`, {
+          ...settings,
+          questions
+        });
+      } else {
+        response = await api.post('/quizzes', {
+          ...settings,
+          questions
+        });
+      }
 
       setCreatedQuiz(response.data);
       setShowShareModal(true);
 
-      // Reset form states
-      setSettings({
-        title: '',
-        description: '',
-        timeLimit: 15,
-        passingScore: 60,
-        isPublic: true
-      });
-      setQuestions([
-        {
-          questionText: '',
-          options: ['', '', '', ''],
-          correctOptionIndex: 0
-        }
-      ]);
+      if (!isEditMode) {
+        // Reset form states if we just created a new one
+        setSettings({
+          title: '',
+          description: '',
+          timeLimit: 15,
+          passingScore: 60,
+          isPublic: true
+        });
+        setQuestions([
+          {
+            questionText: '',
+            options: ['', '', '', ''],
+            correctOptionIndex: 0
+          }
+        ]);
+      }
     } catch (err) {
       console.error(err);
-      setErrorMsg(err.response?.data?.message || 'Failed to deploy quiz. Check fields and retry.');
+      setErrorMsg(err.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'deploy'} quiz. Check fields and retry.`);
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (initialFetchLoading) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -115,14 +165,24 @@ const CustomQuiz = () => {
       className="space-y-8 pb-16"
     >
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
-          <PlusCircle size={28} className="text-primary" />
-          <span>Create Custom Quiz</span>
-        </h1>
-        <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-2xl">
-          Build your own custom quiz, publish it, and share the unique link with peers to benchmark their capability scores.
-        </p>
+      <div className="space-y-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-foreground tracking-tight flex items-center gap-3">
+            {isEditMode ? <Edit2 size={28} className="text-primary" /> : <PlusCircle size={28} className="text-primary" />}
+            <span>{isEditMode ? 'Edit Custom Quiz' : 'Create Custom Quiz'}</span>
+          </h1>
+          <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-2xl mt-2">
+            {isEditMode 
+              ? 'Update your quiz details, questions, and settings.'
+              : 'Build your own custom quiz, publish it, and share the unique link with peers to benchmark their capability scores.'
+            }
+          </p>
+        </div>
+        {isEditMode && (
+          <button onClick={() => navigate(-1)} className="btn-secondary whitespace-nowrap self-start">
+            Cancel Editing
+          </button>
+        )}
       </div>
 
       {errorMsg && (
@@ -147,12 +207,12 @@ const CustomQuiz = () => {
               {isLoading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Deploying Quiz...</span>
+                  <span>{isEditMode ? 'Updating...' : 'Deploying Quiz...'}</span>
                 </>
               ) : (
                 <>
-                  <Send size={15} />
-                  <span>Create & Deploy Quiz</span>
+                  {isEditMode ? <Check size={15} /> : <Send size={15} />}
+                  <span>{isEditMode ? 'Update Quiz' : 'Create & Deploy Quiz'}</span>
                 </>
               )}
             </button>
@@ -186,9 +246,9 @@ const CustomQuiz = () => {
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-xl font-black text-foreground tracking-tight">Quiz Deployed Successfully!</h3>
+                <h3 className="text-xl font-black text-foreground tracking-tight">Quiz {isEditMode ? 'Updated' : 'Deployed'} Successfully!</h3>
                 <p className="text-xs text-muted-foreground font-medium leading-relaxed max-w-sm mx-auto">
-                  Your custom quiz "{createdQuiz.title}" is now active in the system. Share the unique identifier link below.
+                  Your custom quiz "{createdQuiz.title}" has been saved in the system. Share the unique identifier link below.
                 </p>
               </div>
 
@@ -240,10 +300,13 @@ const CustomQuiz = () => {
               <div className="pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowShareModal(false)}
+                  onClick={() => {
+                    setShowShareModal(false);
+                    if (isEditMode) navigate(`/quiz/my-quizzes/${createdQuiz._id}`);
+                  }}
                   className="btn-secondary w-full py-3 text-xs font-black uppercase tracking-widest rounded-2xl"
                 >
-                  Close & Dashboard
+                  {isEditMode ? 'Return to Quiz' : 'Close'}
                 </button>
               </div>
             </motion.div>

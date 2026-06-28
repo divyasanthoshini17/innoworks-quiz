@@ -144,4 +144,48 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
+// 5. Update a custom quiz
+router.put('/:id', authenticate, async (req, res) => {
+  try {
+    const { title, description, category, timeLimit, passingScore, isPublic, questions } = req.body;
+
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) {
+      return res.status(404).json({ message: 'Quiz not found' });
+    }
+
+    // Ensure user is the creator
+    if (!quiz.creator || quiz.creator.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'Access denied. You can only edit quizzes you created.' });
+    }
+
+    if (!title || !questions || !Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ message: 'Title and at least one question are required.' });
+    }
+
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      if (!q.questionText || !q.options || q.options.length < 4 || q.correctOptionIndex === undefined) {
+        return res.status(400).json({ 
+          message: `Question ${i + 1} is invalid. It must contain text, at least 4 options, and a correct option selected.` 
+        });
+      }
+    }
+
+    quiz.title = title;
+    quiz.description = description;
+    quiz.category = category || 'Custom';
+    quiz.timeLimit = timeLimit || 15;
+    quiz.passingScore = passingScore || 60;
+    quiz.isPublic = isPublic !== undefined ? isPublic : true;
+    quiz.questions = questions;
+
+    await quiz.save();
+    res.json(quiz);
+  } catch (error) {
+    console.error('❌ Update Quiz Error:', error.message);
+    res.status(500).json({ message: 'Failed to update quiz' });
+  }
+});
+
 export default router;

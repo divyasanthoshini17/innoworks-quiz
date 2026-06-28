@@ -21,5 +21,6 @@ const quizSchema = new mongoose.Schema({
 
 // Index for looking up quizzes by slug quickly
 quizSchema.index({ slug: 1 });
+quizSchema.index({ creator: 1 });
 
 export const Quiz = mongoose.model('Quiz', quizSchema);

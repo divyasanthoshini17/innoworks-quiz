@@ -171,15 +171,23 @@ router.get('/:id', authenticate, async (req, res) => {
     const attempt = await QuizAttempt.findById(req.params.id)
       .populate({
         path: 'quiz',
-        select: 'title category description questions'
+        select: 'title category description questions creator'
+      })
+      .populate({
+        path: 'user',
+        select: 'username email avatarUrl'
       });
 
     if (!attempt) {
       return res.status(404).json({ message: 'Attempt record not found' });
     }
 
-    // Security check: Only the user who attempted can view the details
-    if (attempt.user && attempt.user.toString() !== req.user.userId) {
+    // Security check: Only the user who attempted OR the quiz creator can view the details
+    const attemptUserId = attempt.user ? (attempt.user._id ? attempt.user._id.toString() : attempt.user.toString()) : null;
+    const isOwner = attemptUserId === req.user.userId;
+    const isCreator = attempt.quiz && attempt.quiz.creator && attempt.quiz.creator.toString() === req.user.userId;
+
+    if (!isOwner && !isCreator) {
       return res.status(403).json({ message: 'Access denied.' });
     }
 
